@@ -273,7 +273,7 @@ class _MessageScreenState extends State<MessageScreen> {
                               children: [
                                 const CircleAvatar(
                                   radius: 25,
-                                  child: Icon(Iconsax.personalcard),
+                                  child: Icon(Icons.person),
                                 ),
                                 const SizedBox(
                                   width: 10,

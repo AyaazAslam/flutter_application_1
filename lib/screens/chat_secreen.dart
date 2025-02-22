@@ -7,7 +7,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_application_1/screens/controllers/my_audio_controller.dart';
 import 'package:flutter_application_1/screens/pdf.dart';
 import 'package:flutter_application_1/screens/video_container.dart';
-import 'package:flutter_application_1/ui/map_screen.dart';
+import 'package:flutter_application_1/screens/map_screen.dart';
 import 'package:flutter_application_1/ui/seacrh_page.dart';
 import 'package:flutter_application_1/utils/static_data.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -143,13 +143,21 @@ class _ChatScreenState extends State<ChatScreen> {
                 label: 'Location',
                 color: Colors.green,
                 onTap: () async {
-                  print("yuyu");
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MapScreen(),
-                      ));
+                  Navigator.pop(context);
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MapScreen()),
+                  );
 
+                  if (result != null) {
+                    final locationData = {
+                      'latitude': result['latitude'],
+                      'longitude': result['longitude'],
+                      'address': result['address'],
+                    };
+                    final locationString = json.encode(locationData);
+                    _onSendMessage(locationString, "location", "");
+                  }
                 },
               ),
             ],
@@ -304,6 +312,11 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     const CircleAvatar(
                       backgroundColor: Colors.green,
+                      radius: 20,
+                      child: Icon(
+                        Icons.person,
+                        color: Colors.white,
+                      ),
                     ),
                     SizedBox(
                       width: width * 0.02,
@@ -426,10 +439,10 @@ class _ChatScreenState extends State<ChatScreen> {
                                 );
                               },
                             )
-                          : CircleAvatar(
+                          : const CircleAvatar(
                               radius: 27,
                               backgroundColor: Colors.green,
-                              child: const Center(
+                              child: Center(
                                 child: Icon(
                                   Icons.send,
                                   color: Colors.white,
@@ -575,51 +588,131 @@ class _ChatScreenState extends State<ChatScreen> {
                                 : map['type'] == "location"
                                     ? GestureDetector(
                                         onTap: () {
-                                          // Map<String, dynamic> locationData =
-                                          //     json.decode(map['message']);
+                                          final locationData =
+                                              json.decode(map['message']);
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                                builder: (context) =>
-                                                    MapScreen()),
+                                              builder: (context) => MapScreen(
+                                                latitude:
+                                                    locationData['latitude'],
+                                                longitude:
+                                                    locationData['longitude'],
+                                                isViewer: true,
+                                              ),
+                                            ),
                                           );
                                         },
-                                        child: Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 9.0),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  Colors.white.withOpacity(0.9),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
+                                        child: Container(
+                                          height: height * 0.2,
+                                          width: width * 0.85,
+                                          padding: EdgeInsets.all(5),
+                                          // decoration: BoxDecoration(
+                                          //   color: Colors.white,
+                                          //   borderRadius:
+                                          //       BorderRadius.circular(15),
+                                          //   boxShadow: [
+                                          //     BoxShadow(
+                                          //       color: Colors.grey
+                                          //           .withOpacity(0.3),
+                                          //       spreadRadius: 2,
+                                          //       blurRadius: 5,
+                                          //       offset: const Offset(0, 2),
+                                          //     ),
+                                          //   ],
+                                          // ),
+                                          child: Center(
                                             child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                              // mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.location_on,
-                                                      color: isSender
-                                                          ? Colors.green
-                                                          : Colors.red,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Location shared',
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: isSender
-                                                            ? Colors.green
-                                                            : Colors.black,
+                                                Container(
+                                                  height: height * 0.185,
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            15),
+                                                    // borderRadius:
+                                                    //     const BorderRadius
+                                                    //         .vertical(
+                                                    //   top: Radius.circular(15),
+                                                    // ),
+                                                    image: DecorationImage(
+                                                      image: NetworkImage(
+                                                        'https://maps.googleapis.com/maps/api/staticmap?'
+                                                        'center=${json.decode(map['message'])['latitude']},${json.decode(map['message'])['longitude']}'
+                                                        '&zoom=15&size=400x200&maptype=roadmap'
+                                                        '&markers=color:red%7C${json.decode(map['message'])['latitude']},${json.decode(map['message'])['longitude']}'
+                                                        '&key=AIzaSyB0sppwm5PsZzrfHd0n2Pv4nSAz188b_Ls',
                                                       ),
+                                                      fit: BoxFit.cover,
                                                     ),
-                                                  ],
+                                                  ),
                                                 ),
+                                                // Container(
+                                                //   // padding:
+                                                //   //     const EdgeInsets.all(4),
+                                                //   height: height * 0.5,
+                                                //   decoration:
+                                                //       const BoxDecoration(
+                                                //     color: Colors.white,
+                                                //     borderRadius:
+                                                //         BorderRadius.vertical(
+                                                //       bottom:
+                                                //           Radius.circular(15),
+                                                //     ),
+                                                //   ),
+                                                //   child: Column(
+                                                //     crossAxisAlignment:
+                                                //         CrossAxisAlignment
+                                                //             .start,
+                                                //     children: [
+                                                //       Row(
+                                                //         children: [
+                                                //           Icon(
+                                                //             Icons
+                                                //                 .place_outlined,
+                                                //             color: isSender
+                                                //                 ? Colors.green
+                                                //                 : Colors.red,
+                                                //             size: 20,
+                                                //           ),
+                                                //           const SizedBox(
+                                                //               width: 8),
+                                                //           Expanded(
+                                                //             child: Text(
+                                                //               json.decode(map[
+                                                //                           'message'])[
+                                                //                       'address'] ??
+                                                //                   'Unknown location',
+                                                //               style:
+                                                //                   const TextStyle(
+                                                //                 fontSize: 13,
+                                                //                 fontWeight:
+                                                //                     FontWeight
+                                                //                         .w500,
+                                                //               ),
+                                                //               maxLines: 2,
+                                                //               overflow:
+                                                //                   TextOverflow
+                                                //                       .ellipsis,
+                                                //             ),
+                                                //           ),
+                                                //         ],
+                                                //       ),
+                                                //       const SizedBox(height: 8),
+                                                //       Text(
+                                                //         'Tap to view in map',
+                                                //         style: TextStyle(
+                                                //           fontSize: 11,
+                                                //           color:
+                                                //               Colors.grey[600],
+                                                //           fontStyle:
+                                                //               FontStyle.italic,
+                                                //         ),
+                                                //       ),
+                                                //     ],
+                                                //   ),
+                                                // ),
                                               ],
                                             ),
                                           ),
