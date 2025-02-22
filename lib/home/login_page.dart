@@ -36,12 +36,12 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  @override
-  void initState() {
-    emailController.text = "mu@gmail.com";
-    passwordController.text = "123456";
-    super.initState();
-  }
+  // @override
+  // void initState() {
+  //   emailController.text = "mu@gmail.com";
+  //   passwordController.text = "123456";
+  //   super.initState();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -230,7 +230,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const BottomNavigationScreen(),
+                                builder: (context) =>
+                                    const BottomNavigationScreen(),
                               ),
                             );
                           }

@@ -75,7 +75,7 @@ class _ChnagePassScreenState extends State<ChnagePassScreen> {
     width = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
-        title: Text("Chnage Password"),
+        title: const Text("Chnage Password"),
         automaticallyImplyLeading: true,
       ),
       body: Center(
@@ -85,11 +85,11 @@ class _ChnagePassScreenState extends State<ChnagePassScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
+              const Text(
                 "Update Your password Now!",
                 style: TextStyle(fontSize: 23),
               ),
-              SizedBox(
+              const SizedBox(
                 height: 20,
               ),
               TextFormWidget(
@@ -109,7 +109,7 @@ class _ChnagePassScreenState extends State<ChnagePassScreen> {
                     }
                     return null;
                   }),
-              SizedBox(
+              const SizedBox(
                 height: 20,
               ),
               TextFormWidget(
@@ -132,7 +132,7 @@ class _ChnagePassScreenState extends State<ChnagePassScreen> {
                     }
                     return null;
                   }),
-              SizedBox(
+              const SizedBox(
                 height: 20,
               ),
               TextFormWidget(
@@ -156,14 +156,14 @@ class _ChnagePassScreenState extends State<ChnagePassScreen> {
 
                     return null;
                   }),
-              SizedBox(
+              const SizedBox(
                 height: 30,
               ),
               InkWell(
                   onTap: () {
                     updatePasword();
                   },
-                  child: ClickButtonWidget(text: 'Update password'))
+                  child: const ClickButtonWidget(text: 'Update password'))
             ],
           ),
         ),

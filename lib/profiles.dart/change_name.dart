@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_typing_uninitialized_variables
+
 import 'package:flutter_application_1/components/click_button_widgets.dart';
 import 'package:flutter_application_1/components/snak_bar.dart';
 import 'package:flutter_application_1/components/textfiels_widget.dart';
@@ -5,9 +7,7 @@ import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/utils/static_data.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/container.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:get/get.dart';
+
 
 class ChangeNameScreen extends StatefulWidget {
   const ChangeNameScreen({super.key});
@@ -67,7 +67,7 @@ class _ChangeNameScreenState extends State<ChangeNameScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Update Name"),
+        title : const Text("Update Name"),
       ),
       body: Center(
         child: Column(
