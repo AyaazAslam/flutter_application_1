@@ -3,27 +3,25 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
-// import 'package:flutter_application_1/screens/audioController.dart';
+
 import 'package:flutter_application_1/screens/controllers/my_audio_controller.dart';
 import 'package:flutter_application_1/screens/pdf.dart';
 import 'package:flutter_application_1/screens/video_container.dart';
 import 'package:flutter_application_1/screens/map_screen.dart';
-import 'package:flutter_application_1/ui/seacrh_page.dart';
+
 import 'package:flutter_application_1/utils/static_data.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:iconsax/iconsax.dart';
+
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:record/record.dart';
+
 import 'dart:convert';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
+import 'package:http/http.dart' as http;
 
 class ChatScreen extends StatefulWidget {
   final String? username;
@@ -143,21 +141,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 label: 'Location',
                 color: Colors.green,
                 onTap: () async {
-                  Navigator.pop(context);
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const MapScreen()),
-                  );
-
-                  if (result != null) {
-                    final locationData = {
-                      'latitude': result['latitude'],
-                      'longitude': result['longitude'],
-                      'address': result['address'],
-                    };
-                    final locationString = json.encode(locationData);
-                    _onSendMessage(locationString, "location", "");
-                  }
+                  print("ayaz");
+                  pickLocation();
                 },
               ),
             ],
@@ -165,6 +150,28 @@ class _ChatScreenState extends State<ChatScreen> {
         );
       },
     );
+  }
+
+  Future<void> pickLocation() async {
+    Navigator.pop(context);
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const MapScreen()),
+    );
+    if (result != null && result is Map<String, dynamic>) {
+      // Create a location message object
+      final locationMessage = {
+        'type': 'location',
+        'data': {
+          'latitude': result['latitude'],
+          'longitude': result['longitude'],
+          'address': result['address'] ?? '',
+        }
+      };
+
+      // Send as a properly formatted JSON string
+      _onSendMessage(jsonEncode(locationMessage), "location", "");
+    }
   }
 
   Widget _buildGridItem({
@@ -297,7 +304,7 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Column(
             children: [
               Container(
-                height: height * 0.1,
+                height: height * 0.08,
                 width: width,
                 color: Colors.white,
                 child: Row(
@@ -321,9 +328,16 @@ class _ChatScreenState extends State<ChatScreen> {
                     SizedBox(
                       width: width * 0.02,
                     ),
-                    Text(
-                      widget.username!,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          widget.username!,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const Text("online"),
+                      ],
                     ),
                     Expanded(
                       child: Align(
@@ -351,7 +365,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
               Expanded(
-                  child: SizedBox(
+                  child: Container(
+                height: height,
+                width: width,
+                decoration: BoxDecoration(
+                    image: DecorationImage(
+                        image: NetworkImage(
+                            "https://i.pinimg.com/originals/97/c0/07/97c00759d90d786d9b6096d274ad3e07.png"),
+                        fit: BoxFit.cover)),
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection("chatRoom")
@@ -472,16 +493,19 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Container(
         constraints: BoxConstraints(maxWidth: size.width * 0.5),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(5),
-          color: isSender ? const Color(0xFF25D366) : const Color(0xFFF0F0F0),
-        ),
+            color: isSender ? const Color(0xFF25D366) : const Color(0xFFF0F0F0),
+            borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(isSender ? 15 : 0),
+                topRight: Radius.circular(isSender ? 15 : 0),
+                bottomLeft: Radius.circular(15),
+                bottomRight: Radius.circular(0))),
         child: IntrinsicWidth(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Column(
               children: [
                 map['type'] == "pdf"
-                    ? MyPdfViewer(
+                    ? PdfContainer(
                         url: map["message"],
                       )
                     : map['type'] == "audio"
@@ -549,8 +573,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                               value: (obj.isRecordPlaying &&
                                                       obj.currentId == index)
                                                   ? obj.completedPercentage
-                                                  : obj.totalDuration
-                                                      .toDouble(),
+                                                      .clamp(0.0, 1.0)
+                                                  : 0.0,
                                             ),
                                           ),
                                         ),
@@ -588,153 +612,120 @@ class _ChatScreenState extends State<ChatScreen> {
                                 : map['type'] == "location"
                                     ? GestureDetector(
                                         onTap: () {
-                                          final locationData =
-                                              json.decode(map['message']);
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => MapScreen(
-                                                latitude:
-                                                    locationData['latitude'],
-                                                longitude:
-                                                    locationData['longitude'],
-                                                isViewer: true,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                        child: Container(
-                                          height: height * 0.2,
-                                          width: width * 0.85,
-                                          padding: EdgeInsets.all(5),
-                                          // decoration: BoxDecoration(
-                                          //   color: Colors.white,
-                                          //   borderRadius:
-                                          //       BorderRadius.circular(15),
-                                          //   boxShadow: [
-                                          //     BoxShadow(
-                                          //       color: Colors.grey
-                                          //           .withOpacity(0.3),
-                                          //       spreadRadius: 2,
-                                          //       blurRadius: 5,
-                                          //       offset: const Offset(0, 2),
-                                          //     ),
-                                          //   ],
-                                          // ),
-                                          child: Center(
-                                            child: Column(
-                                              // mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Container(
-                                                  height: height * 0.185,
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            15),
-                                                    // borderRadius:
-                                                    //     const BorderRadius
-                                                    //         .vertical(
-                                                    //   top: Radius.circular(15),
-                                                    // ),
-                                                    image: DecorationImage(
-                                                      image: NetworkImage(
-                                                        'https://maps.googleapis.com/maps/api/staticmap?'
-                                                        'center=${json.decode(map['message'])['latitude']},${json.decode(map['message'])['longitude']}'
-                                                        '&zoom=15&size=400x200&maptype=roadmap'
-                                                        '&markers=color:red%7C${json.decode(map['message'])['latitude']},${json.decode(map['message'])['longitude']}'
-                                                        '&key=AIzaSyB0sppwm5PsZzrfHd0n2Pv4nSAz188b_Ls',
-                                                      ),
-                                                      fit: BoxFit.cover,
+                                          try {
+                                            final messageStr = map['message'];
+                                            // Check if the message starts with a JSON object
+                                            if (messageStr.startsWith('{')) {
+                                              final message =
+                                                  json.decode(messageStr);
+                                              final locationData =
+                                                  message['data'];
+                                              if (locationData != null &&
+                                                  locationData['latitude'] !=
+                                                      null &&
+                                                  locationData['longitude'] !=
+                                                      null) {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        MapScreen(
+                                                      latitude: locationData[
+                                                          'latitude'],
+                                                      longitude: locationData[
+                                                          'longitude'],
+                                                      isViewer: true,
                                                     ),
                                                   ),
+                                                );
+                                              } else {
+                                                throw FormatException(
+                                                    'Missing location data');
+                                              }
+                                            }
+                                          } catch (e) {
+                                            print('Error: $e');
+                                          }
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(5),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                senderName,
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
                                                 ),
-                                                // Container(
-                                                //   // padding:
-                                                //   //     const EdgeInsets.all(4),
-                                                //   height: height * 0.5,
-                                                //   decoration:
-                                                //       const BoxDecoration(
-                                                //     color: Colors.white,
-                                                //     borderRadius:
-                                                //         BorderRadius.vertical(
-                                                //       bottom:
-                                                //           Radius.circular(15),
-                                                //     ),
-                                                //   ),
-                                                //   child: Column(
-                                                //     crossAxisAlignment:
-                                                //         CrossAxisAlignment
-                                                //             .start,
-                                                //     children: [
-                                                //       Row(
-                                                //         children: [
-                                                //           Icon(
-                                                //             Icons
-                                                //                 .place_outlined,
-                                                //             color: isSender
-                                                //                 ? Colors.green
-                                                //                 : Colors.red,
-                                                //             size: 20,
-                                                //           ),
-                                                //           const SizedBox(
-                                                //               width: 8),
-                                                //           Expanded(
-                                                //             child: Text(
-                                                //               json.decode(map[
-                                                //                           'message'])[
-                                                //                       'address'] ??
-                                                //                   'Unknown location',
-                                                //               style:
-                                                //                   const TextStyle(
-                                                //                 fontSize: 13,
-                                                //                 fontWeight:
-                                                //                     FontWeight
-                                                //                         .w500,
-                                                //               ),
-                                                //               maxLines: 2,
-                                                //               overflow:
-                                                //                   TextOverflow
-                                                //                       .ellipsis,
-                                                //             ),
-                                                //           ),
-                                                //         ],
-                                                //       ),
-                                                //       const SizedBox(height: 8),
-                                                //       Text(
-                                                //         'Tap to view in map',
-                                                //         style: TextStyle(
-                                                //           fontSize: 11,
-                                                //           color:
-                                                //               Colors.grey[600],
-                                                //           fontStyle:
-                                                //               FontStyle.italic,
-                                                //         ),
-                                                //       ),
-                                                //     ],
-                                                //   ),
-                                                // ),
-                                              ],
-                                            ),
+                                              ),
+                                              const SizedBox(height: 5),
+                                              Container(
+                                                height: height * 0.15,
+                                                width: width * 0.4,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[200],
+                                                  borderRadius:
+                                                      BorderRadius.circular(15),
+                                                ),
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: const [
+                                                    Icon(Icons.location_on,
+                                                        size: 40,
+                                                        color: Colors.red),
+                                                    SizedBox(height: 8),
+                                                    Text(
+                                                      'Location',
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold),
+                                                    ),
+                                                    Text(
+                                                      'Tap to view',
+                                                      style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       )
-                                    : Text(
-                                        map["message"],
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: map["sendBy"] ==
-                                                  StaticData.userModel!.userName
-                                              ? Colors.white
-                                              : Colors.black,
+                                    : Container(
+                                        child: Text(
+                                          map["message"],
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: map["sendBy"] ==
+                                                    StaticData
+                                                        .userModel!.userName
+                                                ? Colors.black
+                                                : Colors.black,
+                                          ),
                                         ),
                                       ),
                 Align(
-                  alignment: Alignment.bottomRight,
-                  child: Text(
-                    getFormattedTime(time),
-                    style: const TextStyle(fontSize: 10),
-                  ),
-                )
+                    alignment: Alignment.bottomRight,
+                    child: Row(
+                      children: [
+                        Text(
+                          getFormattedTime(time),
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                        const SizedBox(
+                          width: 5,
+                        ),
+                        const Icon(
+                          Icons.done_all,
+                          size: 15,
+                        )
+                      ],
+                    ))
               ],
             ),
           ),

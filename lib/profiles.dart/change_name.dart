@@ -89,7 +89,7 @@ class _ChangeNameScreenState extends State<ChangeNameScreen> {
                 onTap: () {
                   updateName();
                 },
-                child: ClickButtonWidget(text: "Update Name"))
+                child:const ClickButtonWidget(text: "Update Name"))
           ],
         ),
       ),

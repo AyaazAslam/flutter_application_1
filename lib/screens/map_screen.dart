@@ -243,6 +243,7 @@ class _MapScreenState extends State<MapScreen> {
                                 ),
                               ),
                             ),
+                            
                             ListView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),

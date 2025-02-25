@@ -45,8 +45,7 @@ dependencies:
   image_picker:
   video_player:
   file_picker:
-  flutter_pdfview:
-  pdfx:
+  flutter_cached_pdfview: 
   http:
   path_provider:
   just_audio:
@@ -65,6 +64,8 @@ dependencies:
   flutter_place_picker:
   url_launcher:
   flutter_polyline_points:
+
+
 
 
 
