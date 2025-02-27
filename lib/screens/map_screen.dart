@@ -101,6 +101,7 @@ class _MapScreenState extends State<MapScreen> {
     try {
       List<Location> locations =
           await locationFromAddress(searchController.text);
+          //check if locations is not empty
       if (locations.isNotEmpty) {
         Location location = locations.first;
         List<Placemark> placemarks = await placemarkFromCoordinates(
@@ -113,15 +114,18 @@ class _MapScreenState extends State<MapScreen> {
           'address': "${placemarks.first.street}, ${placemarks.first.locality}",
         };
 
+
         setState(() {
+
           searchedLocation = searchData['location'] as LatLng;
           searchedAddress = searchData['address'] as String;
 
-          // Add to search history if not already present
+        //  Add to search history if not already present
           if (!searchHistory
               .any((item) => item['address'] == searchData['address'])) {
             searchHistory.insert(0, searchData);
           }
+
 
           // Update the marker for the searched location
           markers.removeWhere((marker) => marker.markerId.value == 'searched');
@@ -219,6 +223,7 @@ class _MapScreenState extends State<MapScreen> {
                                   : const LatLng(0, 0),
                               zoom: 15,
                             ),
+                          
                             markers: markers,
                             onMapCreated: (controller) =>
                                 mapController = controller,
@@ -243,7 +248,7 @@ class _MapScreenState extends State<MapScreen> {
                                 ),
                               ),
                             ),
-                            
+
                             ListView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
